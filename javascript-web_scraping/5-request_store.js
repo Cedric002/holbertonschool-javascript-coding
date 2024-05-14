@@ -1,32 +1,25 @@
 #!/usr/bin/node
-const fs = require("fs");
 const request = require("request");
+const fs = require("fs");
 
-if (process.argv.length !== 4) {
-  console.log("Usage: node script.js <url> <file_path>");
+// Vérifiez que l'utilisateur a bien fourni les deux arguments nécessaires
+if (process.argv.length < 4) {
+  console.log("URL ?");
   process.exit(1);
 }
 
-const url = process.argv[2];
-const filePath = process.argv[3];
+let url = process.argv[2];
+let filePath = process.argv[3];
 
-request(url, (error, response, body) => {
-  if (error) {
-    console.error(`An error occurred: ${error.message}`);
-    return;
-  }
-
-  if (response.statusCode === 200) {
-    fs.writeFile(filePath, body, "utf8", (err) => {
+request(url, function (error, response, body) {
+  if (!error && response.statusCode == 200) {
+    fs.writeFile(filePath, body, "utf8", function (err) {
       if (err) {
-        console.error(
-          `An error occurred while writing the file: ${err.message}`
-        );
-        return;
+        return console.log(err);
       }
-      console.log(`File saved: ${filePath}`);
+      console.log("Success");
     });
   } else {
-    console.log(`Error: ${response.statusCode}`);
+    console.log("Error: " + error);
   }
 });
