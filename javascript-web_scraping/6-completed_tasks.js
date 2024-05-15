@@ -1,37 +1,35 @@
 #!/usr/bin/node
-const https = require("https");
+const request = require("request");
 
-// Fetch data from the API
-https
-  .get("https://jsonplaceholder.typicode.com/todos", (response) => {
-    let data = "";
+// Faites une requête à l'API
+request(
+  "https://jsonplaceholder.typicode.com/todos",
+  (error, response, body) => {
+    if (error) {
+      console.error("Erreur lors de la requête :", error.message);
+      return;
+    }
 
-    response.on("data", (chunk) => {
-      data += chunk;
-    });
+    try {
+      const todos = JSON.parse(body);
 
-    response.on("end", () => {
-      try {
-        const todos = JSON.parse(data);
+      // Créez un objet pour stocker le nombre de tâches terminées par utilisateur
+      const completedTasks = {};
 
-        // Create an object to store completed task counts per user ID
-        const completedTasks = {};
+      todos.forEach((task) => {
+        if (task.completed) {
+          // Incrémente le compteur pour l'identifiant d'utilisateur
+          completedTasks[task.userId] = (completedTasks[task.userId] || 0) + 1;
+        }
+      });
 
-        todos.forEach((task) => {
-          if (task.completed) {
-            // Increment the count for the user ID
-            completedTasks[task.userId] =
-              (completedTasks[task.userId] || 0) + 1;
-          }
-        });
-
-        // Print the results as an object
-        console.log(completedTasks);
-      } catch (error) {
-        console.error("Error parsing API data:", error.message);
-      }
-    });
-  })
-  .on("error", (error) => {
-    console.error("Error fetching data from the API:", error.message);
-  });
+      // Affichez les résultats sous forme d'objet
+      console.log(completedTasks);
+    } catch (parseError) {
+      console.error(
+        "Erreur lors de l'analyse des données de l'API :",
+        parseError.message
+      );
+    }
+  }
+);
