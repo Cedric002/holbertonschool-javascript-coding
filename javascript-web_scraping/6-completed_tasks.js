@@ -1,29 +1,30 @@
 #!/usr/bin/node
-const https = require("https");
-const apiUrl = process.argv[2] || "https://jsonplaceholder.typicode.com/todos";
+const request = require("request");
 
-https
-  .get(apiUrl, (res) => {
-    let data = "";
+function processResponse(error, response, body) {
+  if (error || !response || response.statusCode !== 200) {
+    console.error("Error fetching data:", error);
+    return;
+  }
 
-    res.on("data", (chunk) => {
-      data += chunk;
-    });
+  const todos = JSON.parse(body).map((todo) => ({
+    userId: todo.userId,
+    completed: todo.completed,
+  }));
 
-    res.on("end", () => {
-      const todos = JSON.parse(data);
-      const userTaskCounts = {};
+  const userTasks = {};
+  todos.forEach((task) => {
+    if (!task.completed) return;
 
-      todos.forEach((todo) => {
-        if (todo.completed) {
-          const userId = todo.userId.toString();
-          userTaskCounts[userId] = (userTaskCounts[userId] || 0) + 1;
-        }
-      });
-
-      console.log(JSON.stringify(userTaskCounts));
-    });
-  })
-  .on("error", (err) => {
-    console.error(`Error: ${err.message}`);
+    if (!userTasks[task.userId]) {
+      userTasks[task.userId] = { count: 0 };
+    }
+    userTasks[task.userId].count++;
   });
+
+  Object.entries(userTasks).forEach(([userId, userTask]) => {
+    console.log(`User ${userId} has completed ${userTask.count} tasks.`);
+  });
+}
+
+request("https://jsonplaceholder.typicode.com/todos", processResponse);
