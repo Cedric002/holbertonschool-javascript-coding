@@ -1,6 +1,6 @@
 #!/usr/bin/node
 const https = require("https");
-const apiUrl = "https://jsonplaceholder.typicode.com/todos";
+const apiUrl = process.argv[2] || "https://jsonplaceholder.typicode.com/todos";
 
 https
   .get(apiUrl, (res) => {
@@ -16,17 +16,12 @@ https
 
       todos.forEach((todo) => {
         if (todo.completed) {
-          const userId = todo.userId;
+          const userId = todo.userId.toString();
           userTaskCounts[userId] = (userTaskCounts[userId] || 0) + 1;
         }
       });
 
-      const usersWithCompletedTasks = Object.entries(userTaskCounts)
-        .filter(([, count]) => count > 0)
-        .map(([userId, count]) => `User ${userId} completed ${count} tasks.`)
-        .join("\n");
-
-      console.log(usersWithCompletedTasks);
+      console.log(JSON.stringify(userTaskCounts));
     });
   })
   .on("error", (err) => {
