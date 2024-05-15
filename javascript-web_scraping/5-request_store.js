@@ -1,32 +1,17 @@
 #!/usr/bin/node
-const fs = require("fs");
 const request = require("request");
+const fs = require("fs");
 
 const url = process.argv[2];
-const filePath = process.argv[3];
+const file = process.argv[3];
 
-if (!url || !filePath) {
-  console.error("Please provide a URL and a file path as arguments.");
-  process.exit(1);
-}
-
-request(url, (error, response, body) => {
-  if (error) {
-    console.error(`Error fetching ${url}: ${error.message}`);
-    return;
+request(url, function (err, res, body) {
+  if (err) {
+    console.log(err);
   }
-
-  if (response.statusCode !== 200) {
-    console.error(`Error fetching ${url}: Status code ${response.statusCode}`);
-    return;
-  }
-
-  fs.writeFile(filePath, body, "utf8", (err) => {
+  fs.writeFile(file, body, "utf8", function (err) {
     if (err) {
-      console.error(`Error writing to ${filePath}: ${err.message}`);
-      return;
+      console.log(err);
     }
-
-    console.log(`Contents of ${url} saved to ${filePath}`);
   });
 });
