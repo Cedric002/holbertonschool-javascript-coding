@@ -1,25 +1,35 @@
 #!/usr/bin/node
-const request = require("request");
+const https = require("https");
 
-function processResponse(error, response, body) {
-  if (error || !response || response.statusCode !== 200) {
-    console.error("Error fetching data:", error);
-    return;
-  }
+https
+  .get("https://jsonplaceholder.typicode.com/todos", (response) => {
+    let data = "";
 
-  const todos = JSON.parse(body);
+    response.on("data", (chunk) => {
+      data += chunk;
+    });
 
-  const userTasks = {};
-  todos.forEach((todo) => {
-    if (!todo.completed) return;
+    response.on("end", () => {
+      try {
+        const todos = JSON.parse(data);
 
-    if (!userTasks[todo.userId]) {
-      userTasks[todo.userId] = 0;
-    }
-    userTasks[todo.userId]++;
+        const completedTasks = {};
+
+        todos.forEach((task) => {
+          if (task.completed) {
+            completedTasks[task.userId] =
+              (completedTasks[task.userId] || 0) + 1;
+          }
+        });
+
+        Object.entries(completedTasks).forEach(([userId, count]) => {
+          console.log(`User ${userId}: ${count} completed tasks`);
+        });
+      } catch (error) {
+        console.error("Error parsing API data:", error.message);
+      }
+    });
+  })
+  .on("error", (error) => {
+    console.error("Error fetching data from the API:", error.message);
   });
-
-  console.log(userTasks);
-}
-
-request("https://jsonplaceholder.typicode.com/todos", processResponse);
