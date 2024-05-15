@@ -7,24 +7,19 @@ function processResponse(error, response, body) {
     return;
   }
 
-  const todos = JSON.parse(body).map((todo) => ({
-    userId: todo.userId,
-    completed: todo.completed,
-  }));
+  const todos = JSON.parse(body);
 
   const userTasks = {};
-  todos.forEach((task) => {
-    if (!task.completed) return;
+  todos.forEach((todo) => {
+    if (!todo.completed) return;
 
-    if (!userTasks[task.userId]) {
-      userTasks[task.userId] = { count: 0 };
+    if (!userTasks[todo.userId]) {
+      userTasks[todo.userId] = 0;
     }
-    userTasks[task.userId].count++;
+    userTasks[todo.userId]++;
   });
 
-  Object.entries(userTasks).forEach(([userId, userTask]) => {
-    console.log(`User ${userId} has completed ${userTask.count} tasks.`);
-  });
+  console.log(userTasks);
 }
 
 request("https://jsonplaceholder.typicode.com/todos", processResponse);
