@@ -1,42 +1,32 @@
 const fs = require("fs");
 
 /**
- * Counts the number of students in a CSV file and logs the results to the console.
- * @param {string} path - The path to the CSV file.
+ * Counts the number of students in a CSV data file.
+ * @param {string} dataPath - The path to the CSV data file.
+ * @returns {void}
  */
-const countStudents = (path) => {
+const countStudents = (dataPath) => {
   try {
-    const data = fs.readFileSync(path, "utf8");
-    const lines = data.trim().split("\n");
-    const students = lines.filter((line) => line.trim() !== "");
-    const numberOfStudents = students.length;
+    const data = fs.readFileSync(dataPath, "utf-8").trim().split("\n");
+    const students = data.slice(1).filter((student) => student);
+    const fields = students.map((student) => student.split(",")[3]);
+    const uniqueFields = [...new Set(fields)];
+    const studentsByField = uniqueFields.map((field) => ({
+      field,
+      count: fields.filter((f) => f === field).length,
+      students: students
+        .filter((student) => student.split(",")[3] === field)
+        .map((student) => student.split(",")[0]),
+    }));
 
-    console.log(`Number of students: ${numberOfStudents}`);
-
-    const fields = {};
-    students.forEach((student) => {
-      const [firstName, field] = student.split(",");
-      if (fields[field]) {
-        fields[field].push(firstName);
-      } else {
-        fields[field] = [firstName];
-      }
-    });
-
-    Object.keys(fields).forEach((field) => {
-      const firstNames = fields[field];
+    console.log(`Number of students: ${students.length}`);
+    studentsByField.forEach(({ field, count, students }) => {
       console.log(
-        `Number of students in ${field}: ${
-          firstNames.length
-        }. List: ${firstNames.join(", ")}`
+        `Number of students in ${field}: ${count}. List: ${students.join(", ")}`
       );
     });
   } catch (err) {
-    if (err.code === "ENOENT") {
-      console.log("Cannot load the database");
-    } else {
-      console.log(err);
-    }
+    throw new Error("Cannot load the database");
   }
 };
 
