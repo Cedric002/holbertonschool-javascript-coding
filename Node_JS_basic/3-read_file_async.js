@@ -1,48 +1,31 @@
-const fs = require("fs");
-const util = require("util");
+const fs = require("fs").promises;
 
-const readFileAsync = util.promisify(fs.readFile);
-
-/**
- * Counts the number of students in a CSV data file asynchronously.
- * @param {string} dataPath - The path to the CSV data file.
- * @returns {Promise<void>}
- */
-const countStudents = async (dataPath) => {
+const countStudents = async (path) => {
   try {
-    const data = await readFileAsync(dataPath, "utf-8");
-    const lines = data.trim().split("\n");
-    console.log(`Number of students: ${lines.length - 1}`);
-
-    const fieldNames = lines[0].split(",").slice(0, -1); // Remove the empty field at the end
-    const studentsByField = lines.slice(1).reduce((acc, line) => {
-      if (line) {
-        const [firstName, field] = line.split(",");
-        if (!acc[field]) {
-          acc[field] = [];
-        }
-        acc[field].push(firstName);
+    const data = await fs.readFile(path, "utf8");
+    const lines = data.split("\n");
+    const students = lines
+      .slice(1)
+      .filter((line) => line)
+      .map((line) => line.split(","));
+    const fields = {};
+    for (const student of students) {
+      const field = student[3];
+      if (!fields[field]) {
+        fields[field] = [];
       }
-      return acc;
-    }, {});
-
-    for (const fieldName of fieldNames) {
-      if (studentsByField[fieldName]) {
-        console.log(
-          `Number of students in ${fieldName}: ${
-            studentsByField[fieldName].length
-          }. List: ${studentsByField[fieldName].join(", ")}`
-        );
-      } else {
-        console.log(`Number of students in ${fieldName}: 0. List: `);
-      }
+      fields[field].push(student[0]);
     }
-  } catch (err) {
-    if (err.code === "ENOENT") {
-      throw new Error("Cannot load the database");
-    } else {
-      throw err;
+    console.log(`Number of students: ${students.length}`);
+    for (const field in fields) {
+      console.log(
+        `Number of students in ${field}: ${
+          fields[field].length
+        }. List: ${fields[field].join(", ")}`
+      );
     }
+  } catch (error) {
+    throw new Error("Cannot load the database");
   }
 };
 
