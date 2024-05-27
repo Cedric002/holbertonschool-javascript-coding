@@ -1,38 +1,41 @@
-import http from 'http';
-import fs from 'fs';
-import util from 'util';
+const http = require("http");
+const fs = require("fs");
+const path = require("path");
 
-const readFile = util.promisify(fs.readFile);
+const app = http.createServer((req, res) => {
+  res.statusCode = 200;
+  res.setHeader("Content-Type", "text/plain");
 
-async function readDatabase(filePath) {
-  try {
-    const data = await readFile(filePath, 'utf8');
-    const lines = data.split('\n');
-    const students = lines.map(line => line.split(','));
-    return students;
-  } catch (error) {
-    throw error;
-  }
-}
+  if (req.url === "/") {
+    res.end("Hello Holberton School!");
+  } else if (req.url === "/students" && req.method === "GET") {
+    const filePath = path.join(__dirname, process.argv[2] || "database.csv");
+    const fileStream = fs.createReadStream(filePath);
 
-const app = http.createServer(async (req, res) => {
-  res.setHeader('Content-Type', 'text/plain');
-  if (req.url === '/') {
-    res.write('Hello Holberton School!');
-  } else if (req.url === '/students') {
-    try {
-      const students = await readDatabase('/path/to/database.csv');
-      res.write('This is the list of our students\n');
-      students.forEach(student => {
-        res.write(`Name: ${student[0]}, Field: ${student[3]}\n`);
+    res.write("This is the list of our students\n");
+    fileStream.on("data", (chunk) => {
+      const lines = chunk.toString().trim().split("\n");
+      lines.forEach((line) => {
+        if (line.trim() !== "") {
+          res.write(`${line}\n`);
+        }
       });
-    } catch (error) {
-      res.write('Cannot load the database');
-    }
+    });
+    fileStream.on("end", () => {
+      res.end();
+    });
+    fileStream.on("error", (err) => {
+      res.statusCode = 500;
+      res.end(`Error: ${err.message}`);
+    });
+  } else {
+    res.statusCode = 404;
+    res.end("Not found");
   }
-  res.end();
 });
 
-app.listen(1245);
+app.listen(1245, () => {
+  console.log("Server running at http://localhost:1245/");
+});
 
-export default app;
+module.exports = app;
